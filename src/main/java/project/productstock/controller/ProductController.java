@@ -34,7 +34,7 @@ public class ProductController {
     @GetMapping("/{code}")
     @ResponseStatus(HttpStatus.OK)
     public ProductDTO findByCode(@PathVariable String code) throws ProductNotFoundException {
-        return productService.findByCode(code);
+        return productService.getByCode(code);
     }
 
     @GetMapping()
@@ -44,8 +44,8 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public ProductDTO deleteById(@PathVariable Long id) throws ProductNotFoundException {
-        return productService.deleteById(id);
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteById(@PathVariable Long id) throws ProductNotFoundException {
+        productService.deleteById(id);
     }
 }

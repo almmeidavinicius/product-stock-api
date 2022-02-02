@@ -20,6 +20,8 @@ import project.productstock.dto.ProductDTO;
 import project.productstock.exception.ProductNotFoundException;
 import project.productstock.service.ProductService;
 
+import java.util.Collections;
+
 import static org.hamcrest.core.Is.is;
 
 import static project.productstock.utils.JsonConvertionUtils.asJsonString;
@@ -29,7 +31,7 @@ public class ProductControllerTest {
 
     private static final String PRODUCT_API_URL_PATH = "/api/v1/products";
     private static final long VALID_PRODUCT_ID = 1L;
-    private static final long INVALID_PRODUCT_ID = 2l;
+    private static final long INVALID_PRODUCT_ID = 2L;
 
     private MockMvc mockMvc;
 
@@ -83,7 +85,7 @@ public class ProductControllerTest {
         ProductDTO productDTO = ProductDTOBuilder.builder().build().toProductDTO();
 
         // when
-        Mockito.when(productService.findByCode(productDTO.getCode())).thenReturn(productDTO);
+        Mockito.when(productService.getByCode(productDTO.getCode())).thenReturn(productDTO);
 
         // then
         mockMvc.perform(MockMvcRequestBuilders.get(PRODUCT_API_URL_PATH + "/" + productDTO.getCode())
@@ -99,10 +101,62 @@ public class ProductControllerTest {
         ProductDTO productDTO = ProductDTOBuilder.builder().build().toProductDTO();
 
         // when
-        Mockito.when(productService.findByCode(productDTO.getCode())).thenThrow(ProductNotFoundException.class);
+        Mockito.when(productService.getByCode(productDTO.getCode())).thenThrow(ProductNotFoundException.class);
 
         // then
         mockMvc.perform(MockMvcRequestBuilders.get(PRODUCT_API_URL_PATH + "/" + productDTO.getCode())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    void whenGETListWithProductsIsCalledThenOkStatusIsReturned() throws Exception {
+        // given
+        ProductDTO productDTO = ProductDTOBuilder.builder().build().toProductDTO();
+
+        // when
+        Mockito.when(productService.listAll()).thenReturn(Collections.singletonList(productDTO));
+
+        // then
+        mockMvc.perform(MockMvcRequestBuilders.get(PRODUCT_API_URL_PATH)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].code", is(productDTO.getCode())))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].description", is(productDTO.getDescription())));
+    }
+
+    @Test
+    void whenGETListWithoutProductsIsCalledThenOkStatusIsReturned() throws Exception {
+        // when
+        Mockito.when(productService.listAll()).thenReturn(Collections.EMPTY_LIST);
+
+        // then
+        mockMvc.perform(MockMvcRequestBuilders.get(PRODUCT_API_URL_PATH)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk());
+    }
+
+    @Test
+    void whenDeleteIsCalledWithValidIdThenNoContentStatusIsReturned() throws Exception {
+        // given
+        ProductDTO productDTO = ProductDTOBuilder.builder().build().toProductDTO();
+
+        // when
+        Mockito.doNothing().when(productService).deleteById(productDTO.getId());
+
+        // then
+        mockMvc.perform(MockMvcRequestBuilders.delete(PRODUCT_API_URL_PATH + "/" + productDTO.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isNoContent());
+    }
+
+    @Test
+    void whenDeleteIsCalledWithInvalidIdThenNotFoundStatusIsReturned() throws Exception {
+        // when
+        Mockito.doThrow(ProductNotFoundException.class).when(productService).deleteById(INVALID_PRODUCT_ID);
+
+        // then
+        mockMvc.perform(MockMvcRequestBuilders.delete(PRODUCT_API_URL_PATH + "/" + INVALID_PRODUCT_ID)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isNotFound());
     }

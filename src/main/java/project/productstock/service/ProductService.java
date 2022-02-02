@@ -27,7 +27,7 @@ public class ProductService {
         return productMapper.toDTO(savedProduct);
     }
 
-    public ProductDTO findByCode(String code) throws ProductNotFoundException {
+    public ProductDTO getByCode(String code) throws ProductNotFoundException {
         Product product = productRepository.findByCode(code)
                 .orElseThrow(() -> new ProductNotFoundException(code));
         return productMapper.toDTO(product);
@@ -40,10 +40,9 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
-    public ProductDTO deleteById(Long id) throws ProductNotFoundException {
-        Product product = getById(id);
+    public void deleteById(Long id) throws ProductNotFoundException {
+        getById(id);
         productRepository.deleteById(id);
-        return productMapper.toDTO(product);
     }
 
     private void checksIfProductAlreadyExists(String code) throws ProductAlreadyExistsException {
